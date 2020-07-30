@@ -16,10 +16,10 @@ else
 fi
 
 ## if auto_update is not set or to 1 update
-if [ -z ${AUTO_UPDATE} ] || [ "${AUTO_UPDATE}" == "1" ]; then 
+if [ -z ${AUTO_UPDATE} ] || [ "${AUTO_UPDATE}" == "1" ]; then
     # Update Source Server
     if [ ! -z ${SRCDS_APPID} ]; then
-        ./steamcmd/steamcmd.sh +login ${STEAM_USER} ${STEAM_PASS} ${STEAM_AUTH}  +force_install_dir /home/container +app_update ${SRCDS_APPID} $( [[ -z ${SRCDS_BETAID} ]] || printf %s '-beta ${SRCDS_BETAID}' ) $( [[ -z ${SRCDS_BETAPASS} ]] || printf %s '-betapassword ${SRCDS_BETAPASS}' ) $( [[ -z ${HLDS_GAME} ]] || printf %s '+app_set_config 90 mod ${HLDS_GAME}' ) $( [[ -z ${VALIDATE} ]] || printf %s 'validate' ) +quit
+        ./steamcmd/steamcmd.sh +login ${STEAM_USER} ${STEAM_PASS} ${STEAM_AUTH}  +force_install_dir /home/container +app_update ${SRCDS_APPID} validate +quit
     else
         echo -e "No appid set. Starting Server"
     fi
@@ -27,10 +27,17 @@ if [ -z ${AUTO_UPDATE} ] || [ "${AUTO_UPDATE}" == "1" ]; then
 else
     echo -e "Not updating game server as auto update was set to 0. Starting Server"
 fi
+# OxideMod has been replaced with uMod
+if [ -f OXIDE_FLAG ] || [ "${OXIDE}" = 1 ] || [ "${UMOD}" = 1 ]; then
+    curl -s https://raw.githubusercontent.com/camjac251/Rust/server/updateoxide.sh | sh
+fi
 
 # Replace Startup Variables
 MODIFIED_STARTUP=$(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')
 echo -e ":/home/container$ ${MODIFIED_STARTUP}"
+
+# Fix for Rust not starting
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)
 
 # Run the Server
 eval ${MODIFIED_STARTUP}
